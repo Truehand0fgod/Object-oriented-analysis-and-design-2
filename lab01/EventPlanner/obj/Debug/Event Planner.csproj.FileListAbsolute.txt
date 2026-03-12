@@ -1,0 +1,9 @@
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\bin\Debug\WindowsFormsApp1.exe.config
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\bin\Debug\WindowsFormsApp1.exe
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\bin\Debug\WindowsFormsApp1.pdb
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\obj\Debug\Event Planner.csproj.AssemblyReference.cache
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\obj\Debug\WindowsFormsApp1.Properties.Resources.resources
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\obj\Debug\Event Planner.csproj.GenerateResource.cache
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\obj\Debug\Event Planner.csproj.CoreCompileInputs.cache
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\obj\Debug\WindowsFormsApp1.exe
+C:\Users\Nikita\git\OOAD2\Object-oriented-analysis-and-design-2\lab01\EventPlanner\obj\Debug\WindowsFormsApp1.pdb
