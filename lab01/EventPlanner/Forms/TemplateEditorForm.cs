@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using EventPlanner.Models;
 
@@ -9,7 +10,7 @@ namespace EventPlanner.Forms
     public class TemplateEditorForm : Form
     {
         private const int FORM_WIDTH = 500;
-        private const int FORM_HEIGHT = 600;
+        private const int FORM_HEIGHT = 750; // Увеличили высоту
         private const int CONTROL_OFFSET = 130;
 
         private TextBox _txtName;
@@ -22,6 +23,16 @@ namespace EventPlanner.Forms
         private Panel _colorPreview;
         private ColorDialog _colorDialog;
         private TextBox _txtNewItem;
+
+        private TextBox _txtCity;
+        private TextBox _txtStreet;
+        private TextBox _txtBuilding;
+        private TextBox _txtVenue;
+
+        private TextBox _txtOrgName;
+        private TextBox _txtCompany;
+        private TextBox _txtPhone;
+        private TextBox _txtEmail;
 
         private Button _btnSave;
         private Button _btnCancel;
@@ -79,7 +90,7 @@ namespace EventPlanner.Forms
             this.Controls.Add(_nudGuests);
             currentY += 30;
 
-            this.Controls.Add(CreateLabel("Бюджет ($):", 20, currentY));
+            this.Controls.Add(CreateLabel("Бюджет (тыс. руб.):", 20, currentY));
             _txtBudget = CreateTextBox(CONTROL_OFFSET, currentY, 100);
             _txtBudget.Text = "500";
             this.Controls.Add(_txtBudget);
@@ -104,18 +115,18 @@ namespace EventPlanner.Forms
             {
                 Location = new Point(CONTROL_OFFSET, currentY),
                 Width = 300,
-                Height = 150,
+                Height = 120,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.White
             };
 
             string[] defaultItems = {
-                "Кейтеринг", "Музыка", "Декор", "Фотограф",
+                "Кухня", "Музыка", "Декор", "Фотограф",
                 "Ведущий", "Транспорт", "Подарки", "Приглашения"
             };
             _clbItems.Items.AddRange(defaultItems);
             this.Controls.Add(_clbItems);
-            currentY += 160;
+            currentY += 130;
 
             _txtNewItem = CreateTextBox(CONTROL_OFFSET, currentY, 200);
             this.Controls.Add(_txtNewItem);
@@ -124,6 +135,54 @@ namespace EventPlanner.Forms
             btnAddItem.BackColor = Color.FromArgb(76, 175, 80);
             btnAddItem.Click += (s, e) => AddNewItem();
             this.Controls.Add(btnAddItem);
+            currentY += 35;
+
+            this.Controls.Add(CreateLabel("ГОРОД:", 20, currentY));
+            _txtCity = CreateTextBox(CONTROL_OFFSET, currentY, 200);
+            _txtCity.Name = "txtCity";
+            this.Controls.Add(_txtCity);
+            currentY += 30;
+
+            this.Controls.Add(CreateLabel("Улица:", 20, currentY));
+            _txtStreet = CreateTextBox(CONTROL_OFFSET, currentY, 200);
+            _txtStreet.Name = "txtStreet";
+            this.Controls.Add(_txtStreet);
+            currentY += 30;
+
+            this.Controls.Add(CreateLabel("Дом:", 20, currentY));
+            _txtBuilding = CreateTextBox(CONTROL_OFFSET, currentY, 80);
+            _txtBuilding.Name = "txtBuilding";
+            this.Controls.Add(_txtBuilding);
+            currentY += 30;
+
+            this.Controls.Add(CreateLabel("Место:", 20, currentY));
+            _txtVenue = CreateTextBox(CONTROL_OFFSET, currentY, 200);
+            _txtVenue.Name = "txtVenue";
+            this.Controls.Add(_txtVenue);
+            currentY += 35;
+
+            this.Controls.Add(CreateLabel("ОРГАНИЗАТОР:", 20, currentY));
+            _txtOrgName = CreateTextBox(CONTROL_OFFSET, currentY, 200);
+            _txtOrgName.Name = "txtOrgName";
+            this.Controls.Add(_txtOrgName);
+            currentY += 30;
+
+            this.Controls.Add(CreateLabel("Компания:", 20, currentY));
+            _txtCompany = CreateTextBox(CONTROL_OFFSET, currentY, 200);
+            _txtCompany.Name = "txtCompany";
+            this.Controls.Add(_txtCompany);
+            currentY += 30;
+
+            this.Controls.Add(CreateLabel("Телефон:", 20, currentY));
+            _txtPhone = CreateTextBox(CONTROL_OFFSET, currentY, 150);
+            _txtPhone.Name = "txtPhone";
+            this.Controls.Add(_txtPhone);
+            currentY += 30;
+
+            this.Controls.Add(CreateLabel("Email:", 20, currentY));
+            _txtEmail = CreateTextBox(CONTROL_OFFSET, currentY, 200);
+            _txtEmail.Name = "txtEmail";
+            this.Controls.Add(_txtEmail);
             currentY += 35;
 
             _btnSave = CreateButton("Сохранить", 130, currentY, 150, 40);
@@ -220,6 +279,22 @@ namespace EventPlanner.Forms
                         _clbItems.SetItemChecked(i, true);
                 }
             }
+
+            if (Template.Location != null)
+            {
+                _txtCity.Text = Template.Location.City ?? "";
+                _txtStreet.Text = Template.Location.Street ?? "";
+                _txtBuilding.Text = Template.Location.Building ?? "";
+                _txtVenue.Text = Template.Location.Venue ?? "";
+            }
+
+            if (Template.MainOrganizer != null)
+            {
+                _txtOrgName.Text = Template.MainOrganizer.Name ?? "";
+                _txtCompany.Text = Template.MainOrganizer.Company ?? "";
+                _txtPhone.Text = Template.MainOrganizer.Phone ?? "";
+                _txtEmail.Text = Template.MainOrganizer.Email ?? "";
+            }
         }
 
         private void BtnSave_Click(object sender, EventArgs e)
@@ -238,8 +313,6 @@ namespace EventPlanner.Forms
 
             if (decimal.TryParse(_txtBudget.Text, out decimal budget))
                 Template.Budget = budget;
-            else
-                Template.Budget = 0;
 
             Template.ColorCode = SelectedColor;
 
@@ -248,6 +321,22 @@ namespace EventPlanner.Forms
             {
                 Template.RequiredItems.Add(item.ToString());
             }
+
+            if (Template.Location == null)
+                Template.Location = new Address();
+
+            Template.Location.City = _txtCity.Text;
+            Template.Location.Street = _txtStreet.Text;
+            Template.Location.Building = _txtBuilding.Text;
+            Template.Location.Venue = _txtVenue.Text;
+
+            if (Template.MainOrganizer == null)
+                Template.MainOrganizer = new Organizer();
+
+            Template.MainOrganizer.Name = _txtOrgName.Text;
+            Template.MainOrganizer.Company = _txtCompany.Text;
+            Template.MainOrganizer.Phone = _txtPhone.Text;
+            Template.MainOrganizer.Email = _txtEmail.Text;
 
             DialogResult = DialogResult.OK;
         }

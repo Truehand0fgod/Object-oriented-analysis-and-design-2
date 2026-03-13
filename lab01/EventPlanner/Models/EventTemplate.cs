@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace EventPlanner.Models
 {
-    public class EventTemplate
+    public class EventTemplate : ICloneable
     {
         public string Name { get; set; }
         public string Theme { get; set; }
@@ -13,13 +13,18 @@ namespace EventPlanner.Models
         public List<string> RequiredItems { get; set; }
         public string ColorCode { get; set; }
 
+        public Address Location { get; set; }
+        public Organizer MainOrganizer { get; set; }
+
         public EventTemplate()
         {
             RequiredItems = new List<string>();
             ColorCode = "#FF6B6B";
+            Location = new Address();
+            MainOrganizer = new Organizer();
         }
 
-        // Конструктор копирования для Prototype
+        // КОНСТРУКТОР КОПИРОВАНИЯ - ядро паттерна Prototype
         public EventTemplate(EventTemplate source)
         {
             Name = source.Name;
@@ -29,6 +34,18 @@ namespace EventPlanner.Models
             Budget = source.Budget;
             ColorCode = source.ColorCode;
             RequiredItems = new List<string>(source.RequiredItems);
+
+            if (source.Location != null)
+                Location = new Address(source.Location);
+
+            if (source.MainOrganizer != null)
+                MainOrganizer = new Organizer(source.MainOrganizer);
+        }
+
+        // Реализация ICloneable
+        public object Clone()
+        {
+            return new EventTemplate(this);
         }
     }
 }

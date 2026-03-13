@@ -4,7 +4,7 @@ using EventPlanner.Models;
 
 namespace EventPlanner.Services
 {
-    public class TemplateRepository : ITemplateRepository
+    public class TemplateRepository
     {
         private List<EventTemplate> _templates = new List<EventTemplate>();
 
@@ -15,7 +15,7 @@ namespace EventPlanner.Services
 
         private void LoadSampleData()
         {
-            _templates.Add(new EventTemplate
+            var birthday = new EventTemplate
             {
                 Name = "День рождения",
                 Theme = "Вечеринка",
@@ -23,10 +23,24 @@ namespace EventPlanner.Services
                 ExpectedGuests = 20,
                 Budget = 500,
                 ColorCode = "#FF6B6B",
-                RequiredItems = new List<string> { "Кейтеринг", "Музыка", "Декор", "Подарки" }
-            });
+                RequiredItems = new List<string> { "Кухня", "Музыка", "Декор", "Подарки" },
+                Location = new Address
+                {
+                    City = "Москва",
+                    Street = "Тверская",
+                    Building = "15",
+                    Venue = "Ресторан 'Прага'"
+                },
+                MainOrganizer = new Organizer
+                {
+                    Name = "Иван Петров",
+                    Phone = "+7 (999) 123-45-67",
+                    Email = "ivan@example.com",
+                    Company = "EventPro"
+                }
+            };
 
-            _templates.Add(new EventTemplate
+            var conference = new EventTemplate
             {
                 Name = "Конференция",
                 Theme = "Бизнес",
@@ -34,19 +48,25 @@ namespace EventPlanner.Services
                 ExpectedGuests = 100,
                 Budget = 5000,
                 ColorCode = "#4ECDC4",
-                RequiredItems = new List<string> { "Кейтеринг", "Фотограф", "Ведущий", "Приглашения" }
-            });
+                RequiredItems = new List<string> { "Кухня", "Фотограф", "Ведущий", "Приглашения" },
+                Location = new Address
+                {
+                    City = "Санкт-Петербург",
+                    Street = "Невский",
+                    Building = "100",
+                    Venue = "Бизнес-центр 'Невская Ратуша'"
+                },
+                MainOrganizer = new Organizer
+                {
+                    Name = "Анна Смирнова",
+                    Phone = "+7 (999) 765-43-21",
+                    Email = "anna@example.com",
+                    Company = "ConfTech"
+                }
+            };
 
-            _templates.Add(new EventTemplate
-            {
-                Name = "Свадьба",
-                Theme = "Романтика",
-                Duration = TimeSpan.FromHours(6),
-                ExpectedGuests = 50,
-                Budget = 3000,
-                ColorCode = "#FFB6C1",
-                RequiredItems = new List<string> { "Кейтеринг", "Музыка", "Декор", "Фотограф", "Транспорт" }
-            });
+            _templates.Add(birthday);
+            _templates.Add(conference);
         }
 
         public List<EventTemplate> GetAll() => _templates;
@@ -61,18 +81,12 @@ namespace EventPlanner.Services
 
         public void Delete(EventTemplate template) => _templates.Remove(template);
 
+        // ПАТТЕРН PROTOTYPE В ДЕЙСТВИИ
         public EventTemplate CreateEventFromTemplate(EventTemplate template, string eventName)
         {
-            return new EventTemplate
-            {
-                Name = eventName,
-                Theme = template.Theme,     // < no prototype
-                Duration = template.Duration,
-                ExpectedGuests = template.ExpectedGuests,
-                Budget = template.Budget,
-                ColorCode = template.ColorCode,
-                RequiredItems = new List<string>(template.RequiredItems)
-            };
+            var newEvent = new EventTemplate(template); // Клонирование!
+            newEvent.Name = eventName;
+            return newEvent;
         }
     }
 }

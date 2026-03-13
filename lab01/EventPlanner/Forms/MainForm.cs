@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using EventPlanner.Models;
 using EventPlanner.Services;
+using Microsoft.VisualBasic;
 
 namespace EventPlanner.Forms
 {
@@ -12,13 +14,11 @@ namespace EventPlanner.Forms
         private ListBox _listBoxTemplates;
         private FlowLayoutPanel _panelEvents;
         private Button _btnAdd, _btnEdit, _btnCreateEvent, _btnDelete;
-        private ITemplateRepository _repository;
+        private TemplateRepository _repository;
 
         public MainForm()
         {
-            _repository = new PrototypeTemplateRepository(); // С паттерном
-            // _repository = new TemplateRepository(); // Без паттерна
-
+            _repository = new TemplateRepository();
             InitializeComponent();
             RefreshTemplatesList();
         }
@@ -165,7 +165,7 @@ namespace EventPlanner.Forms
 
             using (var font = new Font("Segoe UI", 8))
             {
-                string info = $"{template.ExpectedGuests} гостей | {template.Duration.Hours} ч | {template.Budget}т.р.";
+                string info = $"{template.ExpectedGuests} гостей | {template.Duration.Hours} ч | {template.Budget} тыс. руб.";
                 e.Graphics.DrawString(info, font, Brushes.DimGray,
                     e.Bounds.X + 55, e.Bounds.Y + 28);
             }
@@ -221,16 +221,19 @@ namespace EventPlanner.Forms
         {
             if (!(_listBoxTemplates.SelectedItem is EventTemplate selected)) return;
 
-            using (var dialog = new InputDialog(
+            string eventName = Interaction.InputBox(
                 "Введите название мероприятия:",
                 "Создание мероприятия",
-                $"{selected.Name} на {DateTime.Now:dd.MM}"))
+                $"{selected.Name} на {DateTime.Now:dd.MM}",
+                Screen.PrimaryScreen.WorkingArea.Width / 2 - 200,
+                Screen.PrimaryScreen.WorkingArea.Height / 2 - 100
+            );
+
+            if (!string.IsNullOrWhiteSpace(eventName))
             {
-                if (dialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.InputText))
-                {
-                    var newEvent = _repository.CreateEventFromTemplate(selected, dialog.InputText);
-                    AddEventCard(newEvent);
-                }
+                var newEvent = _repository.CreateEventFromTemplate(selected, eventName);
+                AddEventCard(newEvent);
+
             }
         }
 
@@ -248,15 +251,17 @@ namespace EventPlanner.Forms
                 if (control is Label lbl)
                 {
                     if (lbl.Name == "lblEventName")
-                    {
                         lbl.Text = updatedEvent.Name;
-                    }
                     else if (lbl.Name == "lblEventDetails")
-                    {
-                        lbl.Text = $"{updatedEvent.ExpectedGuests} гостей | " +
-                                  $"{updatedEvent.Duration.Hours} ч {updatedEvent.Duration.Minutes} мин | " +
-                                  $"{updatedEvent.Budget}т.р.";
-                    }
+                        lbl.Text = $"Гостей: {updatedEvent.ExpectedGuests}\n" +
+                                  $"Длит: {updatedEvent.Duration.Hours} ч {updatedEvent.Duration.Minutes} мин\n" +
+                                  $"Бюджет: {updatedEvent.Budget} тыс. руб.";
+                    else if (lbl.Name == "lblAddress")
+                        lbl.Text = $"📍 {updatedEvent.Location?.Venue ?? "не указан"}\n" +
+                                  $"   {updatedEvent.Location?.City ?? ""}, {updatedEvent.Location?.Street ?? ""} {updatedEvent.Location?.Building ?? ""}";
+                    else if (lbl.Name == "lblOrganizer")
+                        lbl.Text = $"👤 {updatedEvent.MainOrganizer?.Name ?? "не указан"}\n" +
+                                  $"   {updatedEvent.MainOrganizer?.Company ?? ""}";
                 }
                 else if (control is Panel pnl && pnl.Name == "colorBar")
                 {
@@ -272,7 +277,7 @@ namespace EventPlanner.Forms
         {
             var card = new Panel
             {
-                Size = new Size(200, 230),
+                Size = new Size(240, 250),  // Уменьшили высоту, так как кнопки стало меньше
                 Margin = new Padding(10),
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.White,
@@ -283,7 +288,7 @@ namespace EventPlanner.Forms
             {
                 Name = "colorBar",
                 Location = new Point(0, 0),
-                Size = new Size(200, 15)
+                Size = new Size(240, 15)
             };
             try { colorBar.BackColor = ColorTranslator.FromHtml(template.ColorCode); }
             catch { colorBar.BackColor = Color.Gray; }
@@ -293,7 +298,7 @@ namespace EventPlanner.Forms
                 Name = "lblEventName",
                 Text = template.Name,
                 Location = new Point(5, 20),
-                Size = new Size(190, 30),
+                Size = new Size(230, 25),
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter
             };
@@ -301,20 +306,41 @@ namespace EventPlanner.Forms
             var lblDetails = new Label
             {
                 Name = "lblEventDetails",
-                Text = $"{template.ExpectedGuests} гостей\n" +
-                      $"{template.Duration.Hours} ч {template.Duration.Minutes} мин\n" +
-                      $"{template.Budget}т.р.",
-                Location = new Point(5, 55),
-                Size = new Size(190, 70),
-                Font = new Font("Segoe UI", 9),
-                TextAlign = ContentAlignment.MiddleCenter
+                Text = $"Гостей: {template.ExpectedGuests}\n" +
+                      $"Длит: {template.Duration.Hours} ч {template.Duration.Minutes} мин\n" +
+                      $"Бюджет: {template.Budget} тыс. руб.",
+                Location = new Point(5, 50),
+                Size = new Size(230, 60),
+                Font = new Font("Segoe UI", 9)
+            };
+
+            var lblAddress = new Label
+            {
+                Name = "lblAddress",
+                Text = $"📍 {template.Location?.Venue ?? "не указан"}\n" +
+                      $"   {template.Location?.City ?? ""}, {template.Location?.Street ?? ""} {template.Location?.Building ?? ""}",
+                Location = new Point(5, 115),
+                Size = new Size(230, 35),
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.DimGray
+            };
+
+            var lblOrganizer = new Label
+            {
+                Name = "lblOrganizer",
+                Text = $"👤 {template.MainOrganizer?.Name ?? "не указан"}\n" +
+                      $"   {template.MainOrganizer?.Company ?? ""}",
+                Location = new Point(5, 155),
+                Size = new Size(230, 30),
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.DimGray
             };
 
             var btnDetails = new Button
             {
                 Text = "Подробнее",
-                Location = new Point(10, 135),
-                Size = new Size(180, 25),
+                Location = new Point(10, 195),
+                Size = new Size(100, 30),
                 BackColor = Color.FromArgb(52, 152, 219),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
@@ -325,12 +351,22 @@ namespace EventPlanner.Forms
                     ? string.Join(", ", template.RequiredItems)
                     : "не указаны";
 
+                string address = template.Location != null
+                    ? $"{template.Location.Venue}, {template.Location.City}, {template.Location.Street} {template.Location.Building}"
+                    : "не указан";
+
+                string organizer = template.MainOrganizer != null
+                    ? $"{template.MainOrganizer.Name} ({template.MainOrganizer.Company})\nТел: {template.MainOrganizer.Phone}\nEmail: {template.MainOrganizer.Email}"
+                    : "не указан";
+
                 MessageBox.Show(
                     $"Мероприятие: {template.Name}\n" +
                     $"Тема: {template.Theme}\n" +
                     $"Гостей: {template.ExpectedGuests}\n" +
                     $"Длительность: {template.Duration.Hours} ч {template.Duration.Minutes} мин\n" +
-                    $"Бюджет: ${template.Budget}\n" +
+                    $"Бюджет: {template.Budget} тыс. руб.\n" +
+                    $"Адрес: {address}\n" +
+                    $"Организатор: {organizer}\n" +
                     $"Необходимо: {items}",
                     "Детали мероприятия",
                     MessageBoxButtons.OK,
@@ -341,27 +377,28 @@ namespace EventPlanner.Forms
             var btnEdit = new Button
             {
                 Text = "Редактировать",
-                Location = new Point(10, 165),
-                Size = new Size(180, 25),
+                Location = new Point(120, 195),
+                Size = new Size(110, 30),
                 BackColor = Color.FromArgb(46, 204, 113),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
 
             btnEdit.Click += (s, e) => {
-                using (var editForm = new EditEventForm(template))
+                using (var editor = new TemplateEditorForm(template))
                 {
-                    if (editForm.ShowDialog() == DialogResult.OK)
+                    if (editor.ShowDialog() == DialogResult.OK)
                     {
-                        UpdateEventCard(card, editForm.Event);
-                        template = editForm.Event;
+                        UpdateEventCard(card, editor.Template);
+                        template = editor.Template;
                     }
                 }
             };
 
             card.Controls.AddRange(new Control[] {
-        colorBar, lblName, lblDetails, btnDetails, btnEdit
-    });
+                colorBar, lblName, lblDetails, lblAddress, lblOrganizer,
+                btnDetails, btnEdit
+            });
 
             return card;
         }
