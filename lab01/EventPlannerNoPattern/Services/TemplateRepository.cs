@@ -24,13 +24,13 @@ namespace EventPlanner.Services
                 ExpectedGuests = 20,
                 Budget = 500,
                 ColorCode = "#FF6B6B",
-                RequiredItems = new List<string> { "Кейтеринг", "Музыка", "Декор", "Подарки" },
+                RequiredItems = new List<string> { "Кухня", "Музыка", "Декор", "Подарки" },
                 Location = new Address
                 {
                     City = "Москва",
                     Street = "Тверская",
                     Building = "15",
-                    Venue = "Ресторан Прага"
+                    Venue = "Ресторан 'Прага'"
                 },
                 MainOrganizer = new Organizer
                 {
@@ -49,13 +49,13 @@ namespace EventPlanner.Services
                 ExpectedGuests = 100,
                 Budget = 5000,
                 ColorCode = "#4ECDC4",
-                RequiredItems = new List<string> { "Кейтеринг", "Фотограф", "Ведущий", "Приглашения" },
+                RequiredItems = new List<string> { "Кухня", "Фотограф", "Ведущий", "Приглашения" },
                 Location = new Address
                 {
                     City = "Санкт-Петербург",
                     Street = "Невский",
                     Building = "100",
-                    Venue = "Бизнес-центр Невская Ратуша"
+                    Venue = "Бизнес-центр 'Невская Ратуша'"
                 },
                 MainOrganizer = new Organizer
                 {
