@@ -1,0 +1,10 @@
+com/knowledgebase/gui/MainFrame$1.class
+com/knowledgebase/model/Note.class
+com/knowledgebase/plugin/Plugin.class
+com/knowledgebase/model/Tag.class
+com/knowledgebase/Main.class
+com/knowledgebase/plugin/PluginLoader.class
+com/knowledgebase/gui/NoteDialog.class
+com/knowledgebase/gui/MainFrame.class
+com/knowledgebase/db/DatabaseManager.class
+com/knowledgebase/plugin/PluginContext.class

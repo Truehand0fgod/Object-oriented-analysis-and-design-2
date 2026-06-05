@@ -19,6 +19,7 @@ public class MainFrame extends JFrame implements PluginContext {
     private DefaultListModel<Note> noteListModel;
     private JList<Note> noteList;
     private List<Plugin> plugins = new ArrayList<>();
+    private JComboBox<Tag> tagFilterCombo;   // добавим поле
 
     public MainFrame(DatabaseManager dbManager, List<Plugin> plugins) {
         this.dbManager = dbManager;
@@ -43,13 +44,19 @@ public class MainFrame extends JFrame implements PluginContext {
 
         JScrollPane scrollPane = new JScrollPane(noteList);
 
-        // Панель кнопок
+        // Кнопки
         JButton newNoteBtn = new JButton("Новая заметка");
         JButton deleteBtn = new JButton("Удалить");
         JButton editTagsBtn = new JButton("Управление тегами");
         JTextField searchField = new JTextField(15);
         JButton searchBtn = new JButton("Поиск");
         JButton refreshBtn = new JButton("Обновить");
+
+        // Комбобокс для фильтрации по тегу
+        tagFilterCombo = new JComboBox<>();
+        tagFilterCombo.setPrototypeDisplayValue(new Tag("", "Длинный тег для размера"));
+        tagFilterCombo.addItem(null);
+        JButton filterByTagBtn = new JButton("Фильтр");
 
         JPanel topPanel = new JPanel();
         topPanel.add(newNoteBtn);
@@ -59,6 +66,9 @@ public class MainFrame extends JFrame implements PluginContext {
         topPanel.add(searchField);
         topPanel.add(searchBtn);
         topPanel.add(refreshBtn);
+        topPanel.add(new JLabel("Тег:"));
+        topPanel.add(tagFilterCombo);
+        topPanel.add(filterByTagBtn);
 
         // Меню плагинов
         JMenuBar menuBar = new JMenuBar();
@@ -89,7 +99,20 @@ public class MainFrame extends JFrame implements PluginContext {
         });
         refreshBtn.addActionListener(e -> refreshNotesList());
 
-        refreshNotesList();
+        filterByTagBtn.addActionListener(e -> {
+            Tag selectedTag = (Tag) tagFilterCombo.getSelectedItem();
+            if (selectedTag == null) {
+                refreshNotesList();
+            } else {
+                List<Note> filteredNotes = dbManager.getNotesByTag(selectedTag.getId());
+                noteListModel.clear();
+                for (Note n : filteredNotes) {
+                    noteListModel.addElement(n);
+                }
+            }
+        });
+
+        refreshNotesList();  // первый вызов – обновит и комбобокс
     }
 
     private void createNewNote() {
@@ -123,49 +146,113 @@ public class MainFrame extends JFrame implements PluginContext {
     }
 
     private void manageTags() {
-        // Простое управление: создание тегов и привязка к выделенной заметке
         Note selected = noteList.getSelectedValue();
-        JDialog dialog = new JDialog(this, "Управление тегами", true);
-        dialog.setSize(400, 300);
-        dialog.setLayout(new BorderLayout());
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Выберите заметку для управления тегами.");
+            return;
+        }
 
+        JDialog dialog = new JDialog(this, "Управление тегами для заметки: " + selected.getTitle(), true);
+        dialog.setSize(550, 400);
+        dialog.setLayout(new BorderLayout(10, 10));
+
+        // Модели списков
         DefaultListModel<Tag> allTagsModel = new DefaultListModel<>();
-        JList<Tag> allTagsList = new JList<>(allTagsModel);
+        DefaultListModel<Tag> noteTagsModel = new DefaultListModel<>();
+
+        // Загружаем все теги
         List<Tag> allTags = dbManager.getAllTags();
         for (Tag t : allTags) allTagsModel.addElement(t);
 
-        JButton addTagBtn = new JButton("Создать тег");
-        JButton assignBtn = new JButton("Прикрепить к заметке");
-        JButton removeBtn = new JButton("Открепить");
-        JPanel btnPanel = new JPanel();
-        btnPanel.add(addTagBtn);
-        if (selected != null) {
-            btnPanel.add(assignBtn);
-            btnPanel.add(removeBtn);
-        }
+        // Загружаем теги, привязанные к заметке
+        List<Tag> noteTags = dbManager.getTagsForNote(selected.getId());
+        for (Tag t : noteTags) noteTagsModel.addElement(t);
 
-        dialog.add(new JScrollPane(allTagsList), BorderLayout.CENTER);
-        dialog.add(btnPanel, BorderLayout.SOUTH);
+        // Компоненты списков
+        JList<Tag> allTagsList = new JList<>(allTagsModel);
+        JList<Tag> noteTagsList = new JList<>(noteTagsModel);
 
-        addTagBtn.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog(dialog, "Название тега:");
-            if (name != null && !name.isBlank()) {
-                Tag tag = dbManager.createTag(name.trim());
-                allTagsModel.addElement(tag);
-            }
-        });
+        JScrollPane leftScroll = new JScrollPane(allTagsList);
+        JScrollPane rightScroll = new JScrollPane(noteTagsList);
 
-        assignBtn.addActionListener(e -> {
+        // Кнопки перемещения тегов
+        JButton addBtn = new JButton("→");
+        JButton removeBtn = new JButton("←");
+
+        JPanel movePanel = new JPanel();
+        movePanel.setLayout(new BoxLayout(movePanel, BoxLayout.Y_AXIS));
+        movePanel.add(Box.createVerticalGlue());
+        movePanel.add(addBtn);
+        movePanel.add(Box.createVerticalStrut(10));
+        movePanel.add(removeBtn);
+        movePanel.add(Box.createVerticalGlue());
+
+        // Кнопки создания и удаления тегов
+        JButton createTagBtn = new JButton("Создать тег");
+        JButton deleteTagBtn = new JButton("Удалить тег");
+
+        JPanel controlPanel = new JPanel(new FlowLayout());
+        controlPanel.add(createTagBtn);
+        controlPanel.add(deleteTagBtn);
+
+        // Сборка диалога
+        JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
+        centerPanel.add(new JLabel("Все теги"), BorderLayout.WEST);
+        centerPanel.add(new JLabel("Теги заметки"), BorderLayout.EAST);
+        centerPanel.add(leftScroll, BorderLayout.WEST);
+        centerPanel.add(rightScroll, BorderLayout.EAST);
+        centerPanel.add(movePanel, BorderLayout.CENTER);
+
+        dialog.add(centerPanel, BorderLayout.CENTER);
+        dialog.add(controlPanel, BorderLayout.SOUTH);
+
+        // Обработчики кнопок
+        addBtn.addActionListener(e -> {
             Tag selectedTag = allTagsList.getSelectedValue();
-            if (selected != null && selectedTag != null) {
+            if (selectedTag != null) {
                 dbManager.addTagToNote(selected.getId(), selectedTag.getId());
+                // Обновляем правый список
+                noteTagsModel.clear();
+                for (Tag t : dbManager.getTagsForNote(selected.getId())) {
+                    noteTagsModel.addElement(t);
+                }
             }
         });
 
         removeBtn.addActionListener(e -> {
-            Tag selectedTag = allTagsList.getSelectedValue();
-            if (selected != null && selectedTag != null) {
+            Tag selectedTag = noteTagsList.getSelectedValue();
+            if (selectedTag != null) {
                 dbManager.removeTagFromNote(selected.getId(), selectedTag.getId());
+                noteTagsModel.clear();
+                for (Tag t : dbManager.getTagsForNote(selected.getId())) {
+                    noteTagsModel.addElement(t);
+                }
+            }
+        });
+
+        createTagBtn.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog(dialog, "Название нового тега:");
+            if (name != null && !name.isBlank()) {
+                Tag newTag = dbManager.createTag(name.trim());
+                allTagsModel.addElement(newTag);
+            }
+        });
+
+        deleteTagBtn.addActionListener(e -> {
+            Tag selectedTag = allTagsList.getSelectedValue();
+            if (selectedTag == null) {
+                JOptionPane.showMessageDialog(dialog, "Выберите тег для удаления из левого списка.");
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(dialog,
+                    "Удалить тег «" + selectedTag.getName() + "»?\n" +
+                    "Он будет откреплён от всех заметок.",
+                    "Подтверждение", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                dbManager.deleteTag(selectedTag.getId());
+                allTagsModel.removeElement(selectedTag);
+                // Удаляем также из правого списка, если был там
+                noteTagsModel.removeElement(selectedTag);
             }
         });
 
@@ -183,6 +270,27 @@ public class MainFrame extends JFrame implements PluginContext {
         List<Note> notes = dbManager.getAllNotes();
         noteListModel.clear();
         for (Note n : notes) noteListModel.addElement(n);
+        // Обновим список тегов в комбобоксе
+        updateTagFilterCombo();
+    }
+
+
+    private void updateTagFilterCombo() {
+        Tag selected = (Tag) tagFilterCombo.getSelectedItem();
+        tagFilterCombo.removeAllItems();
+        tagFilterCombo.addItem(null);   // пункт "Все заметки"
+        for (Tag t : dbManager.getAllTags()) {
+            tagFilterCombo.addItem(t);
+        }
+        // Восстановить предыдущий выбор, если тег ещё существует
+        if (selected != null) {
+            for (int i = 0; i < tagFilterCombo.getItemCount(); i++) {
+                if (selected.equals(tagFilterCombo.getItemAt(i))) {
+                    tagFilterCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
     }
 
     // Методы PluginContext

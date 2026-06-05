@@ -182,4 +182,46 @@ public class DatabaseManager {
         }
         return tags;
     }
+    public List<Note> getNotesByTag(String tagId) {
+        List<Note> notes = new ArrayList<>();
+        String sql = "SELECT n.* FROM notes n " +
+                    "JOIN note_tags nt ON n.id = nt.note_id " +
+                    "WHERE nt.tag_id = ? " +
+                    "ORDER BY n.updated_at DESC";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tagId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                notes.add(new Note(
+                    rs.getString("id"),
+                    rs.getString("title"),
+                    rs.getString("content"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getTimestamp("updated_at").toLocalDateTime()
+                ));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get notes by tag", e);
+        }
+        return notes;
+    }
+
+    public void deleteTag(String tagId) {
+        // Удаляем связи с заметками
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM note_tags WHERE tag_id=?")) {
+            ps.setString(1, tagId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to remove tag from notes", e);
+        }
+        // Удаляем сам тег
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM tags WHERE id=?")) {
+            ps.setString(1, tagId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete tag", e);
+        }
+    }
 }

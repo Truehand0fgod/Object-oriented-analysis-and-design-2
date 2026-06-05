@@ -1,0 +1,9 @@
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/plugin/Plugin.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/Main.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/model/Tag.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/gui/NoteDialog.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/gui/MainFrame.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/plugin/PluginContext.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/model/Note.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/plugin/PluginLoader.java
+/home/nikita/git/Object-oriented-analysis-and-design-2/lab04/knowledge-base-pattern/src/main/java/com/knowledgebase/db/DatabaseManager.java
